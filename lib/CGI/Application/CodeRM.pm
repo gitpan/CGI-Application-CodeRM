@@ -1,5 +1,5 @@
 package CGI::Application::CodeRM ;
-$VERSION = 3.2 ;
+$VERSION = 3.21 ;
 
 ; BEGIN
    { die qq("CGI::Application::CodeRM" is an obsolete module. )
