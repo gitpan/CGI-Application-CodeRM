@@ -1,8 +1,11 @@
 #!perl -w
-use strict;
-use Test::More tests => 1;
+; use strict;
+; use Test::More tests => 1;
 
-use CGI::Application::CodeRM qw| -force | ;
+; eval
+   { require CGI::Application::CodeRM
+   }
+
+; ok($@)
 
 
-ok(defined &run);
