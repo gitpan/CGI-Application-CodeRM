@@ -1,9 +1,13 @@
 package CGI::Application::CodeRM ;
-$VERSION = 0.01 ;
+$VERSION = 3.102 ;
 
 ; use strict
-; use Carp qw| croak carp |
+; use Carp
+  qw| croak
+      carp
+    |
 ; use CGI::Application
+
 ; our $CGIAPPVERS = 3.1
 
 ; sub import
@@ -109,40 +113,33 @@ sub run {
 
 ###### HACKED ##########
 
-        my $is_sub = ref($body) eq 'CODE';
-        
-        # support all returned references
-        my $bodyref = (ref($body) eq 'SCALAR' || $is_sub) ? $body : \$body;
-        
-        
-        # Call cgiapp_postrun() hook
-        $self->cgiapp_postrun($bodyref) unless $is_sub ;
+  my $is_code = ref($body) eq 'CODE';
 
-	# Set up HTTP headers
-	my $headers = $self->_send_headers();
+  # support all returned references
+  my $bodyref = (ref($body) eq 'SCALAR' || $is_code) ? $body : \$body;
 
-	# Build up total output
- 	my $output = $headers . $$bodyref unless $is_sub;
- 
+  # Call cgiapp_postrun() hook (only if is not code)
+  $self->cgiapp_postrun($bodyref) unless $is_code ;
 
-	# Send output to browser (unless we're in serious debug mode!)
-	unless ($ENV{CGI_APP_RETURN_ONLY})
-	{
-    if ($is_sub) {  print $headers  ;
-                    &$bodyref       }
-    else         {  print $output   }
-	}
+  # Send output to browser (unless we're in serious debug mode!)
+  unless ($ENV{CGI_APP_RETURN_ONLY})
+  { # print HTTP headers
+    print $self->_send_headers();
+    
+    if ($is_code)
+    {
+      eval { &$bodyref }  ;
+      die "Error executing the code referenced by run mode '$rm': $@" if $@;
+    }
+    else
+    {
+      print $$bodyref
+    }
+  }
 
-	# clean up operations
-	$self->teardown();
-
-	if ($is_sub)
-	{
-	  if ($ENV{CGI_APP_RETURN_ONLY}) { return &$bodyref }
-	  else { return 1 }
-	}
-	else { return $output }
-	  
+  # clean up operations
+  $self->teardown();
+          
 ###### END HACK ##########
 
 }
@@ -155,16 +152,18 @@ __END__
 
 CGI::Application::CodeRM - handles CODE references returned from Run Modes
 
-=head1 VERSION 0.01
+=head1 VERSION 3.102
 
 This version works for sure with CGI::APPLICATION 3.1 ONLY, while with other versions it may or may not work. Please update it if needed.
+
+B<Note>: The first part of the version number is taken from the CGI::Application version, last two digits are the CodeRM version.
 
 =head1 SYNOPSIS
 
      # in Application module
      
      # as usual
-     use base CGI::Application ;
+     use base 'CGI::Application' ;
      
      # croak if not correct version (if it don't croak it works for sure)
      use CGI::Application::CodeRM ;
@@ -178,15 +177,15 @@ This module adds a possibility to the plain CGI::Application module: instead of 
 
 The main advantage is that you can avoid to charge the memory with the whole (and sometime huge) output and print it while it is produced.
 
-This is particularly useful if you are using HTML::MagicTemplate, that can print with minimum memory requirements, but you can also use it with your own subroutines.
+This is particularly useful if you are using Text::MagicTemplate or HTML::MagicTemplate, that can print with minimum memory requirements, but you can also use it with your own subroutines.
 
 B<Warning>: For obvious reasons, if your RM returns a code reference, the cgiapp_postrun() method will not be called even if defined (see cgiapp_postrun() in L<CGI::Application> for details). In the case you have defined a cgiapp_postrun() method, your referenced code should handle this situation on its own.
 
 =head2 How it works
 
-This module override the CGI::Application run() method with its own (hacked) method. For this reason it works for sure ONLY with a specific CGI::Application version, but it may work anyway with other versions that implement the same run() method. You can force the import of the hacked method even if you use a different CGI::Application version if you use the C<-force> directive at import (see L<"SYNOPSIS">).
+This module override the CGI::Application run() method with its own (hacked) method. For this reason it works for sure ONLY with a specific CGI::Application version, but it may work anyway with other versions that implement the same C<run()> method. You can force the import of the hacked method even if you use a different CGI::Application version if you use the C<-force> directive at import (see L<"SYNOPSIS">).
 
-=head1 HTML::MagicTemplate hints
+=head1 MagicTemplate hints
 
 The following example uses the C<output()> method that returns a reference to the template output, thus collecting the output in memory until printed by the CGI::Application module.
 
@@ -231,9 +230,9 @@ From the directory where this file is located, type:
 
 =over
 
-=item * L<HTML::MagicTemplate|HTML::MagicTemplate>
-
 =item * L<Text::MagicTemplate|Text::MagicTemplate>
+
+=item * L<HTML::MagicTemplate|HTML::MagicTemplate>
 
 =back
 
