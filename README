@@ -1,0 +1,37 @@
+CGI::Application::CodeRM README File
+===============================
+
+
+Description
+-----------
+
+This module adds a possibility to the plain CGI::Application module: instead of returning the output itself, a run mode can return a code reference that will print the output on its own. The referenced code will be called after the printing of the headers.
+
+The main advantage is that you can avoid to charge the memory with the whole (and sometime huge) output and print it while it is produced.
+
+This is particularly useful if you are using HTML::MagicTemplate, that can print with minimum memory requirements, but you can also use it with your own subroutines.
+
+    
+Installation
+------------
+
+0.  Prerequisites:
+- Perl version 5.005 or more recent.
+
+
+1. CPAN installation
+
+    perl -MCPAN -e 'install CGI::Application::CodeRM'
+
+
+2. Standard installation
+- from the directory where this file is located, type:
+
+        perl Makefile.PL
+        make
+        make test
+        make install
+
+--
+Domizio Demichelis <dd@4pro.net>
+2003-12-10
